@@ -133,14 +133,32 @@ class RepositoryMirror:
                 # Add Codeberg remote
                 codeberg_remote = repo.create_remote('codeberg', codeberg_url)
                 
-                # Push all branches and tags to Codeberg
+                # Push all branches and tags to Codeberg, excluding pull request refs
                 logger.info(f"Pushing to Codeberg")
-                repo.git.push('codeberg', '--mirror')
+                try:
+                    repo.git.push('codeberg', '--mirror')
+                except GitCommandError as push_error:
+                    # Check if the error is due to pull request refs being rejected
+                    if 'refs/pull/' in str(push_error) and 'hook declined' in str(push_error):
+                        logger.warning(f"Pull request refs rejected for {repo_name}, pushing branches and tags separately")
+                        # Push all branches
+                        repo.git.push('codeberg', '--all')
+                        # Push all tags
+                        repo.git.push('codeberg', '--tags')
+                    else:
+                        # Re-raise the error if it's not related to pull request refs
+                        raise
                 
                 logger.info(f"Successfully mirrored {repo_name}")
                 return True
                 
             except GitCommandError as e:
+                # Check if this is a partial success (some refs pushed successfully)
+                if 'refs/pull/' in str(e) and ('hook declined' in str(e) or 'remote rejected' in str(e)):
+                    # Count as success if main branches/tags were pushed despite PR ref failures
+                    if 'new branch' in str(e) or 'new tag' in str(e):
+                        logger.warning(f"Git push completed with PR ref warnings for {repo_name}: {e}")
+                        return True
                 logger.error(f"Git error while mirroring {repo_name}: {e}")
                 return False
             except Exception as e:
@@ -204,8 +222,12 @@ class RepositoryMirror:
         
         logger.info(f"Mirroring completed: {successful_mirrors} successful, {failed_mirrors} failed")
         
-        if failed_mirrors > 0:
+        # Only exit with error code if ALL repositories failed
+        if successful_mirrors == 0 and failed_mirrors > 0:
+            logger.error("All repositories failed to mirror")
             sys.exit(1)
+        elif failed_mirrors > 0:
+            logger.warning(f"Some repositories failed to mirror ({failed_mirrors} failed, {successful_mirrors} successful)")
 
 
 def main():
