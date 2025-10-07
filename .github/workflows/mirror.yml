@@ -32,7 +32,7 @@ jobs:
         
     - name: Run mirroring script
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
         CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         CODEBERG_USERNAME: ${{ secrets.CODEBERG_USERNAME }}
       run: python scripts/mirror.py

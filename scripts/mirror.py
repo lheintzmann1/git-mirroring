@@ -12,7 +12,7 @@ import time
 import logging
 import requests
 from typing import List, Dict, Set
-from github import Github
+from github import Github, Auth
 from git import Repo, GitCommandError
 import tempfile
 import shutil
@@ -45,7 +45,8 @@ class RepositoryMirror:
             logger.error(f"CODEBERG_USERNAME: {'✓' if self.codeberg_username else '✗'}")
             sys.exit(1)
             
-        self.github = Github(self.github_token)
+        auth = Auth.Token(self.github_token)
+        self.github = Github(auth=auth)
         self.blacklist = self._load_blacklist()
         
     def _load_blacklist(self) -> Set[str]:

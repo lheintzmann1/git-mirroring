@@ -30,8 +30,11 @@ This repository automatically mirrors all your GitHub repositories to Codeberg u
 
 3. **Configure repository secrets:**
    Go to your repository Settings → Secrets and variables → Actions, then add:
+   - `PERSONAL_GITHUB_TOKEN`: Your GitHub personal access token (with `repo` and `read:org` scopes)
    - `CODEBERG_TOKEN`: Your Codeberg personal access token
    - `CODEBERG_USERNAME`: Your Codeberg username
+   
+   **Important**: You need to create a personal GitHub token because the default `GITHUB_TOKEN` doesn't have permission to list all your repositories.
 
 4. **Configure the blacklist:**
    Edit the `blacklist.txt` file to add repositories you don't want to mirror (one per line)
