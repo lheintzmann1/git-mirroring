@@ -34,11 +34,15 @@ class RepositoryMirror:
         """Initialize the repository mirror with required tokens and usernames."""
         self.github_token = os.getenv('GITHUB_TOKEN')
         self.codeberg_token = os.getenv('CODEBERG_TOKEN')
-        self.github_username = os.getenv('GITHUB_USERNAME')
+        self.github_username = os.getenv('GITHUB_ACTOR') or os.getenv('GH_USERNAME')
         self.codeberg_username = os.getenv('CODEBERG_USERNAME')
         
         if not all([self.github_token, self.codeberg_token, self.github_username, self.codeberg_username]):
-            logger.error("Missing required environment variables")
+            logger.error(f"Missing required environment variables:")
+            logger.error(f"GITHUB_TOKEN: {'✓' if self.github_token else '✗'}")
+            logger.error(f"CODEBERG_TOKEN: {'✓' if self.codeberg_token else '✗'}")
+            logger.error(f"GITHUB_USERNAME (GITHUB_ACTOR): {'✓' if self.github_username else '✗'}")
+            logger.error(f"CODEBERG_USERNAME: {'✓' if self.codeberg_username else '✗'}")
             sys.exit(1)
             
         self.github = Github(self.github_token)
