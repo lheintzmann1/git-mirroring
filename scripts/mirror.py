@@ -3,7 +3,8 @@
 GitHub to Codeberg Repository Mirroring Script
 
 This script automatically mirrors GitHub repositories to Codeberg,
-excluding repositories listed in the blacklist.
+excluding repositories listed in the blacklist and repositories
+belonging to organizations (only personal repositories are mirrored).
 """
 
 import os
@@ -147,19 +148,27 @@ class RepositoryMirror:
                 return False
     
     def get_repositories_to_mirror(self) -> List:
-        """Get list of repositories to mirror, excluding blacklisted ones."""
+        """Get list of repositories to mirror, excluding blacklisted ones and organization repositories."""
         try:
             user = self.github.get_user()
             all_repos = list(user.get_repos())
             
             repos_to_mirror = []
+            org_repos_skipped = 0
+            
             for repo in all_repos:
+                # Skip repositories that belong to organizations (not owned by the user)
+                if repo.owner.login != self.github_username:
+                    logger.info(f"Skipping organization repository: {repo.full_name} (owned by {repo.owner.login})")
+                    org_repos_skipped += 1
+                    continue
+                    
                 if repo.name not in self.blacklist:
                     repos_to_mirror.append(repo)
                 else:
                     logger.info(f"Skipping blacklisted repository: {repo.name}")
             
-            logger.info(f"Found {len(repos_to_mirror)} repositories to mirror (excluding {len(self.blacklist)} blacklisted)")
+            logger.info(f"Found {len(repos_to_mirror)} repositories to mirror (excluding {len(self.blacklist)} blacklisted and {org_repos_skipped} organization repositories)")
             return repos_to_mirror
             
         except Exception as e:
