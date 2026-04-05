@@ -1,3 +1,4 @@
 git-mirroring
 lheintzmann1
 Obsidian
+Apogee.*
