@@ -17,6 +17,7 @@ from github import Github, Auth
 from git import Repo, GitCommandError
 import tempfile
 import shutil
+import fnmatch
 
 # Configure logging
 logging.basicConfig(
@@ -49,6 +50,12 @@ class RepositoryMirror:
         auth = Auth.Token(self.github_token)
         self.github = Github(auth=auth)
         self.blacklist = self._load_blacklist()
+
+    def _is_blacklisted(self, repo_name: str) -> bool:
+        for pattern in self.blacklist:
+            if fnmatch.fnmatch(repo_name, pattern):
+                return True
+        return False
         
     def _load_blacklist(self) -> Set[str]:
         """Load repository blacklist from file."""
@@ -181,7 +188,7 @@ class RepositoryMirror:
                     org_repos_skipped += 1
                     continue
                     
-                if repo.name not in self.blacklist:
+                if not self._is_blacklisted(repo.name):
                     repos_to_mirror.append(repo)
                 else:
                     logger.info(f"Skipping blacklisted repository: {repo.name}")
